@@ -26,7 +26,7 @@
             margin: 0 10px;
             padding: 10px;
             border: 1px solid #ccc;
-            width: 200px; /* 각 팀의 너비 지정 */
+            width: 200px;
             box-sizing: border-box;
         }
         .team h3 {
@@ -34,14 +34,26 @@
         }
         .team p {
             margin: 5px 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        @keyframes shuffleEffect {
+            0% { transform: translateY(0); }
+            25% { transform: translateY(-10px); }
+            50% { transform: translateY(0); }
+            75% { transform: translateY(10px); }
+            100% { transform: translateY(0); }
+        }
+        .shuffle {
+            animation: shuffleEffect 0.5s infinite;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div id="memberForms">
-            <h2>나이와 성별에 따라 팀 나누기</h2>
-            <button onclick="divideTeams()">팀 나누기</button>
+            <h2>지미션 워크샵 팀 나누기</h2>
+            <button onclick="startShuffle()">팀 배정</button>
         </div>
     </div>
 
@@ -92,6 +104,17 @@
             { name: '한민주', age: 2000, gender: 'female' ,group:'G'}
         ];
 
+        function startShuffle() {
+            var resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+            var shuffleDiv = document.createElement('div');
+            shuffleDiv.classList.add('shuffle');
+            shuffleDiv.textContent = '팀을 나누는 중입니다...잠시만요..';
+            resultDiv.appendChild(shuffleDiv);
+
+            setTimeout(divideTeams, 1000); // 2초 후 팀 나누기 실행
+        }
+
         function divideTeams() {
             // OB, YB, 여성 멤버 분리
             var obMembers = members.filter(member => member.group === 'OB');
@@ -105,6 +128,7 @@
 
             // 팀 초기화
             var teams = [[], [], [], []];
+            var teamNames = ['핑클 팀 ', 'HOT 팀 ', '신화 팀 ', 'SES 팀 '];
 
             // OB 멤버들 4명씩 각 팀에 랜덤 배정
             for (var i = 0; i < 4; i++) {
@@ -133,27 +157,36 @@
             var resultDiv = document.getElementById('result');
             resultDiv.innerHTML = '';
 
+            var teamDivs = [];
             for (var k = 0; k < 4; k++) {
-                var teamName = '팀 ' + (k + 1);
-                var teamMembers = teams[k];
-
-                // 팀 이름과 구성 멤버 출력
                 var teamDiv = document.createElement('div');
                 teamDiv.classList.add('team');
                 var teamTitle = document.createElement('h3');
-                teamTitle.textContent = teamName;
+                teamTitle.textContent = teamNames[k];
                 teamDiv.appendChild(teamTitle);
-
-                // 각 멤버 정보 출력
-                for (var m = 0; m < teamMembers.length; m++) {
-                    var member = teamMembers[m];
-                    var memberInfo = document.createElement('p');
-                    memberInfo.textContent = member.group +'팀 ' + member.name ;
-                    teamDiv.appendChild(memberInfo);
-                }
-
-                // 완성된 팀 정보를 결과 출력 창에 추가
                 resultDiv.appendChild(teamDiv);
+                teamDivs.push(teamDiv);
+            }
+
+            var maxLength = Math.max(teams[0].length, teams[1].length, teams[2].length, teams[3].length);
+            for (var i = 0; i < maxLength; i++) {
+                (function(i) {
+                    setTimeout(function() {
+                        for (var k = 0; k < 4; k++) {
+                            if (i < teams[k].length) {
+                                var member = teams[k][i];
+                                var memberInfo = document.createElement('p');
+                                memberInfo.textContent = member.group + '팀 ' + member.name;
+                                teamDivs[k].appendChild(memberInfo);
+                                setTimeout((function(memberInfo) {
+                                    return function() {
+                                        memberInfo.style.opacity = 1;
+                                    };
+                                })(memberInfo), 100);
+                            }
+                        }
+                    }, i * 500);
+                })(i);
             }
         }
 
