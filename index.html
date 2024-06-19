@@ -1,25 +1,37 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>지미션 워크샵 팀 나누기</title>
+    <title>워크샵 팀 나우기</title>
     <style>
         body {
+            background-image: url('https://cdn.imweb.me/thumbnail/20210312/6d24add144ce4.jpg');
+            background-position: center; /* 중앙 정렬 */
+            background-size: cover; /* 화면에 맞춤 */
+            background-repeat: no-repeat; /* 반복 방지 */
+            background-attachment: fixed; /* 스크롤 시 고정 */
+            
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
         }
+
         .container {
+
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 25vh;
+            height: 20vh;
+            margin-top: -70px;
         }
+
         #result {
             margin-top: 20px;
             text-align: center;
         }
+
         .team {
             display: inline-block;
             vertical-align: top;
@@ -29,31 +41,79 @@
             width: 200px;
             box-sizing: border-box;
         }
+
         .team h3 {
             margin-top: 0;
         }
+
         .team p {
             margin: 5px 0;
             opacity: 0;
             transition: opacity 0.5s ease-in-out;
         }
-        @keyframes shuffleEffect {
-            0% { transform: translateY(0); }
-            25% { transform: translateY(-10px); }
-            50% { transform: translateY(0); }
-            75% { transform: translateY(10px); }
-            100% { transform: translateY(0); }
+
+        /*teamNames = ['핑클 팀 ', 'HOT 팀 ', '신화 팀 ', 'SES 팀 ']; */
+        .team-1 {
+            background-color: #e3c5e8;
+            /* 예시 색상 */
         }
+
+        .team-2 {
+            background-color: #d48181;
+            /* 예시 색상 */
+        }
+
+        .team-3 {
+            background-color: #f9c79e;
+            /* 예시 색상 */
+        }
+
+        .team-4 {
+            background-color: #cbeff3;
+            /* 예시 색상 */
+        }
+
+
+        @keyframes shuffleEffect {
+            0% {
+                transform: translateY(0);
+            }
+
+            25% {
+                transform: translateY(-10px);
+            }
+
+            50% {
+                transform: translateY(0);
+            }
+
+            75% {
+                transform: translateY(10px);
+            }
+
+            100% {
+                transform: translateY(0);
+            }
+        }
+
         .shuffle {
+            margin-top: 130px;
             animation: shuffleEffect 0.5s infinite;
+            color: #eee;
+            font-size: 40px;
         }
     </style>
 </head>
+
 <body>
+    <div class="logo">
+        <img src="Img/GMISSIONLogo2.png" style="margin: auto; width: 1200px;
+        height: 300px;">
+    </div>
     <div class="container">
         <div id="memberForms">
-            <h2>지미션 워크샵 팀 나누기</h2>
-            <button onclick="startShuffle()">팀 배정</button>
+            <h2 style="color:#eee;">워크샵 팀 나누기</h2>
+            <button onclick="startShuffle()">팀 추첨</button>
         </div>
     </div>
 
@@ -95,13 +155,13 @@
             { name: '오경수', age: 1995, gender: 'male', group: 'YB' },
             { name: '지명훈', age: 1998, gender: 'male', group: 'YB' },
             { name: '신성현', age: 2000, gender: 'male', group: 'YB' },
-            { name: '김연휘', age: 1981, gender: 'female' ,group:'G'},
-            { name: '강민경', age: 1986, gender: 'female' ,group:'G'},
-            { name: '임소명', age: 1990, gender: 'female' ,group:'G'},
-            { name: '이용희', age: 1996, gender: 'female' ,group:'G'},
-            { name: '이승연', age: 1998, gender: 'female' ,group:'G'},
-            { name: '성수린', age: 1998, gender: 'female' ,group:'G'},
-            { name: '한민주', age: 2000, gender: 'female' ,group:'G'}
+            { name: '김연휘', age: 1981, gender: 'female', group: 'G' },
+            { name: '강민경', age: 1986, gender: 'female', group: 'G' },
+            { name: '임소명', age: 1990, gender: 'female', group: 'G' },
+            { name: '이용희', age: 1996, gender: 'female', group: 'G' },
+            { name: '이승연', age: 1998, gender: 'female', group: 'G' },
+            { name: '성수린', age: 1998, gender: 'female', group: 'G' },
+            { name: '한민주', age: 2000, gender: 'female', group: 'G' }
         ];
 
         function startShuffle() {
@@ -158,9 +218,12 @@
             resultDiv.innerHTML = '';
 
             var teamDivs = [];
+            var teamClasses = ['team-1', 'team-2', 'team-3', 'team-4'];
+
             for (var k = 0; k < 4; k++) {
                 var teamDiv = document.createElement('div');
                 teamDiv.classList.add('team');
+                teamDiv.classList.add(teamClasses[k]);
                 var teamTitle = document.createElement('h3');
                 teamTitle.textContent = teamNames[k];
                 teamDiv.appendChild(teamTitle);
@@ -170,16 +233,16 @@
 
             var maxLength = Math.max(teams[0].length, teams[1].length, teams[2].length, teams[3].length);
             for (var i = 0; i < maxLength; i++) {
-                (function(i) {
-                    setTimeout(function() {
+                (function (i) {
+                    setTimeout(function () {
                         for (var k = 0; k < 4; k++) {
                             if (i < teams[k].length) {
                                 var member = teams[k][i];
                                 var memberInfo = document.createElement('p');
                                 memberInfo.textContent = member.group + '팀 ' + member.name;
                                 teamDivs[k].appendChild(memberInfo);
-                                setTimeout((function(memberInfo) {
-                                    return function() {
+                                setTimeout((function (memberInfo) {
+                                    return function () {
                                         memberInfo.style.opacity = 1;
                                     };
                                 })(memberInfo), 100);
@@ -210,4 +273,5 @@
         }
     </script>
 </body>
+
 </html>
