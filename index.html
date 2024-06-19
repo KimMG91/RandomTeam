@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>지미션 워크샵 팀 나우기</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 25vh;
+        }
+        #result {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .team {
+            display: inline-block;
+            vertical-align: top;
+            margin: 0 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            width: 200px;
+            box-sizing: border-box;
+        }
+        .team h3 {
+            margin-top: 0;
+        }
+        .team p {
+            margin: 5px 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        @keyframes shuffleEffect {
+            0% { transform: translateY(0); }
+            25% { transform: translateY(-10px); }
+            50% { transform: translateY(0); }
+            75% { transform: translateY(10px); }
+            100% { transform: translateY(0); }
+        }
+        .shuffle {
+            animation: shuffleEffect 0.5s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="memberForms">
+            <h2>지미션 워크샵 팀 나누기</h2>
+            <button onclick="startShuffle()">팀 배정</button>
+        </div>
+    </div>
+
+    <div id="result">
+        <!-- 결과가 여기에 표시됩니다 -->
+    </div>
+
+    <script>
+        var members = [
+            { name: '박규열', age: 1962, gender: 'male', group: 'OB' },
+            { name: '최경호', age: 1967, gender: 'male', group: 'OB' },
+            { name: '이정훈', age: 1967, gender: 'male', group: 'OB' },
+            { name: '한준섭', age: 1968, gender: 'male', group: 'OB' },
+            { name: '전승원', age: 1968, gender: 'male', group: 'OB' },
+            { name: '양대경', age: 1969, gender: 'male', group: 'OB' },
+            { name: '최순호', age: 1969, gender: 'male', group: 'OB' },
+            { name: '김영준', age: 1971, gender: 'male', group: 'OB' },
+            { name: '하성우', age: 1971, gender: 'male', group: 'OB' },
+            { name: '윤태형', age: 1972, gender: 'male', group: 'OB' },
+            { name: '김경호', age: 1975, gender: 'male', group: 'OB' },
+            { name: '송의용', age: 1977, gender: 'male', group: 'OB' },
+            { name: '오영진', age: 1978, gender: 'male', group: 'OB' },
+            { name: '조홍득', age: 1980, gender: 'male', group: 'OB' },
+            { name: '이두진', age: 1985, gender: 'male', group: 'OB' },
+            { name: '유세원', age: 1986, gender: 'male', group: 'OB' },
+            { name: '박수환', age: 1988, gender: 'male', group: 'YB' },
+            { name: '윤병준', age: 1988, gender: 'male', group: 'YB' },
+            { name: '박진솔', age: 1991, gender: 'male', group: 'YB' },
+            { name: '김민건', age: 1991, gender: 'male', group: 'YB' },
+            { name: '권도연', age: 1992, gender: 'male', group: 'YB' },
+            { name: '이광우', age: 1992, gender: 'male', group: 'YB' },
+            { name: '박성민', age: 1992, gender: 'male', group: 'YB' },
+            { name: '가이랏', age: 1993, gender: 'male', group: 'YB' },
+            { name: '고은성', age: 1993, gender: 'male', group: 'YB' },
+            { name: '주만근', age: 1993, gender: 'male', group: 'YB' },
+            { name: '송현민', age: 1993, gender: 'male', group: 'YB' },
+            { name: '김현영', age: 1994, gender: 'male', group: 'YB' },
+            { name: '조현민', age: 1995, gender: 'male', group: 'YB' },
+            { name: '오경수', age: 1995, gender: 'male', group: 'YB' },
+            { name: '지명훈', age: 1998, gender: 'male', group: 'YB' },
+            { name: '신성현', age: 2000, gender: 'male', group: 'YB' },
+            { name: '김연휘', age: 1981, gender: 'female' ,group:'G'},
+            { name: '강민경', age: 1986, gender: 'female' ,group:'G'},
+            { name: '임소명', age: 1990, gender: 'female' ,group:'G'},
+            { name: '이용희', age: 1996, gender: 'female' ,group:'G'},
+            { name: '이승연', age: 1998, gender: 'female' ,group:'G'},
+            { name: '성수린', age: 1998, gender: 'female' ,group:'G'},
+            { name: '한민주', age: 2000, gender: 'female' ,group:'G'}
+        ];
+
+        function startShuffle() {
+            var resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+            var shuffleDiv = document.createElement('div');
+            shuffleDiv.classList.add('shuffle');
+            shuffleDiv.textContent = '팀을 나누는 중입니다...잠시만요..';
+            resultDiv.appendChild(shuffleDiv);
+
+            setTimeout(divideTeams, 1000); // 2초 후 팀 나누기 실행
+        }
+
+        function divideTeams() {
+            // OB, YB, 여성 멤버 분리
+            var obMembers = members.filter(member => member.group === 'OB');
+            var ybMembers = members.filter(member => member.group === 'YB');
+            var femaleMembers = members.filter(member => member.gender === 'female');
+
+            // OB, YB 멤버 각각 섞기
+            shuffle(obMembers);
+            shuffle(ybMembers);
+            shuffle(femaleMembers);
+
+            // 팀 초기화
+            var teams = [[], [], [], []];
+            var teamNames = ['SES 팀 ', '핑클 팀 ', '신화 팀 ', 'GOD 팀 '];
+
+            // OB 멤버들 4명씩 각 팀에 랜덤 배정
+            for (var i = 0; i < 4; i++) {
+                for (var j = 0; j < 4; j++) {
+                    teams[i].push(obMembers.pop());
+                }
+            }
+
+            // YB 멤버들 4명씩 각 팀에 랜덤 배정
+            for (var i = 0; i < 4; i++) {
+                for (var j = 0; j < 4; j++) {
+                    teams[i].push(ybMembers.pop());
+                }
+            }
+
+            // 여성 멤버들 배정: 1, 2, 3팀에 2명씩, 4팀에 1명
+            for (var k = 0; k < femaleMembers.length; k++) {
+                if (k < 6) {
+                    teams[k % 3].push(femaleMembers[k]);
+                } else {
+                    teams[3].push(femaleMembers[k]);
+                }
+            }
+
+            // 결과 출력
+            var resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '';
+
+            var teamDivs = [];
+            for (var k = 0; k < 4; k++) {
+                var teamDiv = document.createElement('div');
+                teamDiv.classList.add('team');
+                var teamTitle = document.createElement('h3');
+                teamTitle.textContent = teamNames[k];
+                teamDiv.appendChild(teamTitle);
+                resultDiv.appendChild(teamDiv);
+                teamDivs.push(teamDiv);
+            }
+
+            var maxLength = Math.max(teams[0].length, teams[1].length, teams[2].length, teams[3].length);
+            for (var i = 0; i < maxLength; i++) {
+                (function(i) {
+                    setTimeout(function() {
+                        for (var k = 0; k < 4; k++) {
+                            if (i < teams[k].length) {
+                                var member = teams[k][i];
+                                var memberInfo = document.createElement('p');
+                                memberInfo.textContent = member.group + '팀 ' + member.name;
+                                teamDivs[k].appendChild(memberInfo);
+                                setTimeout((function(memberInfo) {
+                                    return function() {
+                                        memberInfo.style.opacity = 1;
+                                    };
+                                })(memberInfo), 100);
+                            }
+                        }
+                    }, i * 500);
+                })(i);
+            }
+        }
+
+        // Fisher-Yates shuffle 알고리즘을 사용한 배열 섞기 함수
+        function shuffle(array) {
+            var currentIndex = array.length, temporaryValue, randomIndex;
+
+            // 배열 끝까지 반복
+            while (0 !== currentIndex) {
+                // 남아 있는 요소 중 하나를 랜덤 선택
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+
+                // 현재 요소와 랜덤 선택한 요소를 교환
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
+            }
+
+            return array;
+        }
+    </script>
+</body>
+</html>
