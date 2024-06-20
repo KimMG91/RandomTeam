@@ -8,11 +8,15 @@
     <style>
         body {
             background-image: url('https://cdn.imweb.me/thumbnail/20210312/6d24add144ce4.jpg');
-            background-position: center; /* 중앙 정렬 */
-            background-size: cover; /* 화면에 맞춤 */
-            background-repeat: no-repeat; /* 반복 방지 */
-            background-attachment: fixed; /* 스크롤 시 고정 */
-            
+            background-position: center;
+            /* 중앙 정렬 */
+            background-size: cover;
+            /* 화면에 맞춤 */
+            background-repeat: no-repeat;
+            /* 반복 방지 */
+            background-attachment: fixed;
+            /* 스크롤 시 고정 */
+
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
@@ -155,6 +159,7 @@
             { name: '오경수', age: 1995, gender: 'male', group: 'YB' },
             { name: '지명훈', age: 1998, gender: 'male', group: 'YB' },
             { name: '신성현', age: 2000, gender: 'male', group: 'YB' },
+            { name: '한태구', age: 2000, gender: 'male', group: 'YB' },
             { name: '김연휘', age: 1981, gender: 'female', group: 'G' },
             { name: '강민경', age: 1986, gender: 'female', group: 'G' },
             { name: '임소명', age: 1990, gender: 'female', group: 'G' },
@@ -203,6 +208,10 @@
                     teams[i].push(ybMembers.pop());
                 }
             }
+
+            // YB 멤버 한 명을 마지막 팀에 추가
+            teams[3].push(ybMembers.pop());
+
 
             // 여성 멤버들 배정: 1, 2, 3팀에 2명씩, 4팀에 1명
             for (var k = 0; k < femaleMembers.length; k++) {
