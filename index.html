@@ -9,14 +9,9 @@
         body {
             background-image: url('https://cdn.imweb.me/thumbnail/20210312/6d24add144ce4.jpg');
             background-position: center;
-            /* 중앙 정렬 */
             background-size: cover;
-            /* 화면에 맞춤 */
             background-repeat: no-repeat;
-            /* 반복 방지 */
             background-attachment: fixed;
-            /* 스크롤 시 고정 */
-
             font-family: Arial, sans-serif;
             text-align: center;
             margin-top: 50px;
@@ -59,22 +54,18 @@
         /*teamNames = ['핑클 팀 ', 'HOT 팀 ', '신화 팀 ', 'SES 팀 ']; */
         .team-1 {
             background-color: #e3c5e8;
-            /* 예시 색상 */
         }
 
         .team-2 {
             background-color: #d48181;
-            /* 예시 색상 */
         }
 
         .team-3 {
             background-color: #f9c79e;
-            /* 예시 색상 */
         }
 
         .team-4 {
             background-color: #cbeff3;
-            /* 예시 색상 */
         }
 
 
@@ -177,7 +168,7 @@
             shuffleDiv.textContent = '팀을 나누는 중입니다...잠시만요..';
             resultDiv.appendChild(shuffleDiv);
 
-            setTimeout(divideTeams, 1000); // 2초 후 팀 나누기 실행
+            setTimeout(divideTeams, 1000); // 1초 후 팀 나누기 실행
         }
 
         function divideTeams() {
@@ -257,7 +248,7 @@
                                 })(memberInfo), 100);
                             }
                         }
-                    }, i * 500);
+                    }, i * 300);
                 })(i);
             }
         }
