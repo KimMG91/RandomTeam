@@ -1,10 +1,10 @@
 var CONFIG = {
     "title": "워크샵 팀 배정",
     "teamNames": [
-        "SES 팀",
-        "핑클 팀",
-        "신화 팀",
-        "GOD 팀"
+        "A",
+        "B",
+        "C",
+        "D"
     ],
     "teamColors": [
         "#e3c5e8",
