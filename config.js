@@ -1,5 +1,5 @@
 var CONFIG = {
-    "title": "명량운동회 팀 배정",
+    "title": "워크샵 팀 배정",
     "teamNames": [
         "SES 팀",
         "핑클 팀",
