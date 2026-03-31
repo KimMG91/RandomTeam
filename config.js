@@ -207,11 +207,6 @@ var DEFAULT_MEMBERS = [
         "gender": "female"
     },
     {
-        "name": "이승연",
-        "ageGroup": "20대",
-        "gender": "female"
-    },
-    {
         "name": "성수린",
         "ageGroup": "20대",
         "gender": "female"
