@@ -5,7 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>워크샵 팀 나누기</title>
-    <script src="config.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -286,8 +285,8 @@
 <body>
     <!-- 탭 네비게이션 -->
     <div class="tab-bar">
+		<button class="tab-btn" onclick="switchTab('draw')">팀 추첨</button>
         <button class="tab-btn active" onclick="switchTab('settings')">멤버 관리</button>
-        <button class="tab-btn" onclick="switchTab('draw')">팀 추첨</button>
     </div>
 
     <!-- 설정 탭 -->
@@ -330,8 +329,8 @@
             <div class="member-count" id="memberCount"></div>
 
             <div class="actions-bar">
-                <button class="btn btn-save" onclick="saveAll()">저장</button>
-                <button class="btn btn-sm" style="background:#555;color:#fff;" onclick="showGitHubSettings()">설정</button>
+                <button class="btn btn-save" onclick="saveToSheet()">저장</button>
+                <button class="btn btn-add" onclick="loadFromSheet()">불러오기</button>
             </div>
             <div id="saveStatus" style="margin-top:8px;font-size:13px;color:#666;"></div>
 
@@ -347,29 +346,6 @@
         </div>
     </div>
 
-    <!-- GitHub 설정 모달 -->
-    <div id="githubModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;">
-        <div style="background:#fff; max-width:450px; margin:100px auto; padding:24px; border-radius:12px; text-align:left;">
-            <h3 style="margin-bottom:16px;">GitHub 설정</h3>
-            <p style="font-size:13px; color:#666; margin-bottom:12px;">한 번만 설정하면 브라우저에 저장됩니다.</p>
-            <div style="margin-bottom:10px;">
-                <label style="font-size:13px; font-weight:bold;">Personal Access Token</label>
-                <input type="password" id="ghToken" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
-            </div>
-            <div style="margin-bottom:10px;">
-                <label style="font-size:13px; font-weight:bold;">저장소 소유자 (owner)</label>
-                <input type="text" id="ghOwner" placeholder="예: myusername" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
-            </div>
-            <div style="margin-bottom:10px;">
-                <label style="font-size:13px; font-weight:bold;">저장소 이름 (repo)</label>
-                <input type="text" id="ghRepo" placeholder="예: team-divider" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
-            </div>
-            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
-                <button class="btn btn-save" onclick="saveGitHubSettings()">저장</button>
-                <button class="btn btn-reset" onclick="document.getElementById('githubModal').style.display='none'">취소</button>
-            </div>
-        </div>
-    </div>
 
     <!-- 추첨 탭 -->
     <div id="tab-draw" class="tab-content">
@@ -389,6 +365,7 @@
         // ============================================
         var STORAGE_KEY_MEMBERS = 'teamDivider_members';
         var STORAGE_KEY_CONFIG = 'teamDivider_config';
+        var STORAGE_KEY_FIXED = 'teamDivider_fixedGroups';
 
         // 현재 편집 중인 데이터 (저장 전까지 메모리에만 존재)
         var currentMembers = [];
@@ -396,145 +373,107 @@
 
         function initData() {
             var saved = localStorage.getItem(STORAGE_KEY_MEMBERS);
-            if (saved) {
-                currentMembers = JSON.parse(saved);
-            } else {
-                currentMembers = DEFAULT_MEMBERS.map(function(m) { return Object.assign({}, m); });
-            }
+            if (saved) currentMembers = JSON.parse(saved);
+
             var savedCfg = localStorage.getItem(STORAGE_KEY_CONFIG);
-            if (savedCfg) {
-                currentConfig = JSON.parse(savedCfg);
-            } else {
-                currentConfig = JSON.parse(JSON.stringify(CONFIG));
+            if (savedCfg) currentConfig = JSON.parse(savedCfg);
+
+            if (!currentConfig.teamNames) {
+                currentConfig = {
+                    title: '팀 배정',
+                    teamNames: ['A팀', 'B팀', 'C팀', 'D팀'],
+                    teamColors: ['#e3c5e8', '#d48181', '#f9c79e', '#cbeff3'],
+                    teamLimits: []
+                };
             }
             if (!currentConfig.teamLimits) currentConfig.teamLimits = [];
         }
 
         // ============================================
-        // GitHub API
+        // Google Sheets 연동
         // ============================================
-        var GH_STORAGE_KEY = 'teamDivider_github';
-
-        function getGitHubSettings() {
-            var saved = localStorage.getItem(GH_STORAGE_KEY);
-            return saved ? JSON.parse(saved) : null;
-        }
-
-        function showGitHubSettings() {
-            var settings = getGitHubSettings() || {};
-            document.getElementById('ghToken').value = settings.token || '';
-            document.getElementById('ghOwner').value = settings.owner || '';
-            document.getElementById('ghRepo').value = settings.repo || '';
-            document.getElementById('githubModal').style.display = 'block';
-        }
-
-        function saveGitHubSettings() {
-            var token = document.getElementById('ghToken').value.trim();
-            var owner = document.getElementById('ghOwner').value.trim();
-            var repo = document.getElementById('ghRepo').value.trim();
-            if (!token || !owner || !repo) { alert('모든 항목을 입력하세요.'); return; }
-            localStorage.setItem(GH_STORAGE_KEY, JSON.stringify({ token: token, owner: owner, repo: repo }));
-            document.getElementById('githubModal').style.display = 'none';
-            alert('GitHub 설정이 저장되었습니다.');
-        }
+        var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyLfmJUY_k7Q5SkeFDJth0vAd_LDwkyKUzBwZHTTjt1rtDX9U18IXFN1nNiIJZB8r4/exec';
 
         function setStatus(msg) {
             document.getElementById('saveStatus').textContent = msg;
         }
 
-        function buildConfigContent() {
-            var lines = [];
-            lines.push('var CONFIG = ' + JSON.stringify(currentConfig, null, 4) + ';');
-            lines.push('');
-            lines.push('var DEFAULT_MEMBERS = ' + JSON.stringify(currentMembers, null, 4) + ';');
-            return lines.join('\n');
+        // JSONP 방식으로 Google Apps Script 호출 (CORS 우회)
+        function callSheet(params, callback) {
+            var cbName = 'sheetCb_' + Date.now();
+            window[cbName] = function(data) {
+                delete window[cbName];
+                callback(data);
+            };
+            var script = document.createElement('script');
+            script.src = SCRIPT_URL + '?' + params + '&callback=' + cbName;
+            script.onerror = function() {
+                delete window[cbName];
+                setStatus('연결 실패');
+            };
+            document.body.appendChild(script);
+            setTimeout(function() { document.body.removeChild(script); }, 10000);
         }
 
-        function saveAll() {
-            // localStorage에도 저장
+        function saveToSheet() {
             localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(currentMembers));
             localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(currentConfig));
 
-            var gh = getGitHubSettings();
-            if (!gh) {
-                alert('GitHub 설정을 먼저 해주세요.');
-                showGitHubSettings();
-                return;
-            }
+            setStatus('시트에 저장 중...');
 
-            setStatus('GitHub에 저장 중...');
-            var url = 'https://api.github.com/repos/' + gh.owner + '/' + gh.repo + '/contents/config.js';
+            var teams = currentConfig.teamNames.map(function(name, i) {
+                return {
+                    name: name,
+                    color: currentConfig.teamColors[i] || '#cccccc',
+                    limit: currentConfig.teamLimits[i] || ''
+                };
+            });
 
-            // 먼저 현재 파일의 sha를 가져옴
-            fetch(url, {
-                headers: { 'Authorization': 'token ' + gh.token }
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                var sha = data.sha || '';
-                var content = btoa(unescape(encodeURIComponent(buildConfigContent())));
-                return fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        'Authorization': 'token ' + gh.token,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: '멤버/팀 설정 업데이트',
-                        content: content,
-                        sha: sha
-                    })
-                });
-            })
-            .then(function(res) {
-                if (res.ok) {
-                    setStatus('GitHub에 저장 완료!');
+            var saveData = encodeURIComponent(JSON.stringify({ members: currentMembers, teams: teams }));
+            callSheet('action=save&data=' + saveData, function(data) {
+                if (data.success) {
+                    setStatus('시트에 저장 완료!');
                 } else {
-                    return res.json().then(function(err) { throw new Error(err.message); });
+                    setStatus('저장 실패: ' + (data.error || '알 수 없는 오류'));
                 }
-            })
-            .catch(function(err) {
-                setStatus('저장 실패: ' + err.message);
             });
         }
 
-        function loadFromGitHub() {
-            var gh = getGitHubSettings();
-            if (!gh) {
-                alert('GitHub 설정을 먼저 해주세요.');
-                showGitHubSettings();
-                return;
-            }
+        function loadFromSheet() {
+            setStatus('시트에서 불러오는 중...');
 
-            setStatus('GitHub에서 불러오는 중...');
-            var url = 'https://api.github.com/repos/' + gh.owner + '/' + gh.repo + '/contents/config.js';
+            callSheet('action=read', function(data) {
+                if (data.members && data.members.length > 0) {
+                    currentMembers = data.members;
+                }
+                if (data.teams && data.teams.length > 0) {
+                    currentConfig.teamNames = data.teams.map(function(t) { return t.name; });
+                    currentConfig.teamColors = data.teams.map(function(t) { return t.color; });
+                    currentConfig.teamLimits = data.teams.map(function(t) { return t.limit; });
+                }
 
-            fetch(url, {
-                headers: { 'Authorization': 'token ' + gh.token }
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                if (!data.content) throw new Error('파일을 찾을 수 없습니다.');
-                var decoded = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
-
-                // config.js 내용을 파싱 (eval 대신 Function 사용)
-                var fn = new Function(decoded + '; return { config: CONFIG, members: DEFAULT_MEMBERS };');
-                var result = fn();
-
-                currentConfig = result.config;
-                currentMembers = result.members;
-                if (!currentConfig.teamLimits) currentConfig.teamLimits = [];
+                // 고정조 저장
+                if (data.fixedGroups) {
+                    localStorage.setItem(STORAGE_KEY_FIXED, JSON.stringify(data.fixedGroups));
+                }
 
                 localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(currentMembers));
                 localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(currentConfig));
 
                 renderMemberList();
                 renderTeamSettings();
-                setStatus('GitHub에서 불러오기 완료!');
-            })
-            .catch(function(err) {
-                setStatus('불러오기 실패: ' + err.message);
+                setStatus('멤버 ' + currentMembers.length + '명 / 팀 ' + currentConfig.teamNames.length + '개 불러옴!');
             });
+        }
+
+        function loadPrevious() {
+            var saved = localStorage.getItem(STORAGE_KEY_MEMBERS);
+            if (!saved) { alert('저장된 이전 데이터가 없습니다.'); return; }
+            currentMembers = JSON.parse(saved);
+            var savedCfg = localStorage.getItem(STORAGE_KEY_CONFIG);
+            if (savedCfg) currentConfig = JSON.parse(savedCfg);
+            renderMemberList();
+            renderTeamSettings();
         }
 
         // 연령대+성별로 그룹 자동 분류
@@ -714,14 +653,40 @@
             var cfg = currentConfig;
             var teamCount = cfg.teamNames.length;
 
-            // 그룹별 분리
-            var obMembers = members.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'OB'; });
-            var ybMembers = members.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'YB'; });
-            var gMembers = members.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'G'; });
+            // 고정조 불러오기
+            var fixedGroups = [];
+            var savedFixed = localStorage.getItem(STORAGE_KEY_FIXED);
+            if (savedFixed) fixedGroups = JSON.parse(savedFixed);
 
-            shuffle(obMembers);
-            shuffle(ybMembers);
-            shuffle(gMembers);
+            // 고정조에 해당하는 멤버 이름 목록
+            var fixedNames = {};
+            fixedGroups.forEach(function(group, gi) {
+                group.forEach(function(name) {
+                    fixedNames[name] = gi;
+                });
+            });
+
+            // 고정조 멤버와 일반 멤버 분리
+            var fixedMembers = []; // [groupIndex] = [members]
+            fixedGroups.forEach(function() { fixedMembers.push([]); });
+            var freeMembers = [];
+
+            members.forEach(function(m) {
+                if (fixedNames[m.name] !== undefined) {
+                    fixedMembers[fixedNames[m.name]].push(m);
+                } else {
+                    freeMembers.push(m);
+                }
+            });
+
+            // 일반 멤버를 그룹별 분리
+            var obMembers = freeMembers.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'OB'; });
+            var ybMembers = freeMembers.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'YB'; });
+            var gMembers = freeMembers.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'G'; });
+
+            shuffle(shuffle(obMembers));
+            shuffle(shuffle(ybMembers));
+            shuffle(shuffle(gMembers));
 
             // 팀 초기화
             var teams = [];
@@ -730,10 +695,37 @@
             // 인원 제한 배열
             var limits = cfg.teamLimits || [];
 
-            // 각 그룹을 팀에 배분 (인원 제한 적용, 마지막 팀은 나머지)
-            distributeToTeams(obMembers, teams, limits);
-            distributeToTeams(ybMembers, teams, limits);
+            // 0) 고정조를 랜덤 팀에 배정 (같은 조는 같은 팀)
+            var teamIndices = [];
+            for (var t = 0; t < teamCount; t++) teamIndices.push(t);
+            shuffle(teamIndices);
+            fixedMembers.forEach(function(group, gi) {
+                if (group.length === 0) return;
+                var targetTeam = teamIndices[gi % teamIndices.length];
+                group.forEach(function(m) {
+                    teams[targetTeam].push(m);
+                });
+            });
+
+            // 1) 여성(G) 균등 배분
             distributeToTeams(gMembers, teams, limits);
+
+            // 2) OB(연장자) 균등 배분
+            distributeToTeams(obMembers, teams, limits);
+
+            // 3) YB(주니어) 균등 배분
+            distributeToTeams(ybMembers, teams, limits);
+
+            // 3) 각 팀 내 정렬: 남성(연령대 높은순) → 여성(연령대 높은순)
+            var ageOrder = { '60대': 1, '50대': 2, '40대': 3, '30대': 4, '20대': 5 };
+            for (var t = 0; t < teamCount; t++) {
+                teams[t].sort(function(a, b) {
+                    var aFemale = a.gender === 'female' ? 1 : 0;
+                    var bFemale = b.gender === 'female' ? 1 : 0;
+                    if (aFemale !== bFemale) return aFemale - bFemale;
+                    return (ageOrder[a.ageGroup] || 9) - (ageOrder[b.ageGroup] || 9);
+                });
+            }
 
             // 결과 출력
             var resultDiv = document.getElementById('result');
@@ -762,21 +754,23 @@
                             if (i < teams[k].length) {
                                 var member = teams[k][i];
                                 var memberInfo = document.createElement('p');
-                                var group = getGroup(member.ageGroup, member.gender);
-                                memberInfo.textContent = group + ' ' + member.name;
+                                memberInfo.textContent = member.name;
                                 teamDivs[k].appendChild(memberInfo);
                                 setTimeout((function(el) {
                                     return function() { el.classList.add('show'); };
                                 })(memberInfo), 100);
                             }
                         }
-                        // 마지막 줄이면 완료 메시지
+                        // 마지막 줄이면 완료 메시지 (팀 카드 아래)
                         if (i === maxLength - 1) {
                             setTimeout(function() {
+                                var doneWrap = document.createElement('div');
+                                doneWrap.style.width = '100%';
                                 var doneDiv = document.createElement('div');
                                 doneDiv.className = 'done-msg';
                                 doneDiv.textContent = '팀 배정 완료!';
-                                resultDiv.appendChild(doneDiv);
+                                doneWrap.appendChild(doneDiv);
+                                resultDiv.appendChild(doneWrap);
                             }, 500);
                         }
                     }, i * 400);
@@ -787,10 +781,10 @@
         // 멤버를 팀에 라운드 로빈 배분 (인원 제한 적용, 마지막 팀은 나머지)
         function distributeToTeams(memberList, teams, limits) {
             var lastIdx = teams.length - 1;
-            var robin = 0; // 라운드 로빈 시작 인덱스
+            var robin = Math.floor(Math.random() * lastIdx);
             memberList.forEach(function(member) {
                 var placed = false;
-                // 라운드 로빈으로 돌면서 빈자리 있는 팀에 배정 (마지막 팀 제외)
+                // 마지막 팀 제외하고 라운드 로빈
                 for (var attempt = 0; attempt < lastIdx; attempt++) {
                     var t = (robin + attempt) % lastIdx;
                     var limit = (limits && limits[t]) ? limits[t] : Infinity;
@@ -801,7 +795,7 @@
                         break;
                     }
                 }
-                // 앞 팀이 다 찼으면 마지막 팀에
+                // 앞 팀이 다 찼으면 마지막 팀(나머지)에
                 if (!placed) {
                     teams[lastIdx].push(member);
                 }
