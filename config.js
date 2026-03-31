@@ -13,9 +13,9 @@ var CONFIG = {
         "#cbeff3"
     ],
     "teamLimits": [
-        10,
-        10,
-        10,
+        6,
+        6,
+        6,
         ""
     ]
 };
