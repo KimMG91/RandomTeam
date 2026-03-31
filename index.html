@@ -5,272 +5,829 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>워크샵 팀 나누기</title>
+    <script src="config.js"></script>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             background-image: url('https://cdn.imweb.me/thumbnail/20210312/6d24add144ce4.jpg');
             background-position: center;
             background-size: cover;
             background-repeat: no-repeat;
             background-attachment: fixed;
-            font-family: Arial, sans-serif;
+            font-family: 'Malgun Gothic', Arial, sans-serif;
             text-align: center;
-            margin-top: 50px;
+            color: #333;
         }
 
-        .container {
-
+        /* 탭 네비게이션 */
+        .tab-bar {
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 20vh;
-            margin-top: -70px;
+            gap: 4px;
+            padding: 16px;
+            background: rgba(0,0,0,0.5);
         }
+        .tab-btn {
+            padding: 10px 30px;
+            border: none;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            background: rgba(255,255,255,0.4);
+            color: #fff;
+            transition: background 0.2s;
+        }
+        .tab-btn.active {
+            background: rgba(255,255,255,0.95);
+            color: #333;
+        }
+
+        /* 탭 컨텐츠 */
+        .tab-content { display: none; padding: 20px; }
+        .tab-content.active { display: block; }
+
+        /* 설정 탭 */
+        .settings-panel {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            padding: 24px;
+            text-align: left;
+        }
+        .settings-panel h2 { margin-bottom: 16px; }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .input-row input, .input-row select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .input-row input[type="text"] { width: 120px; }
+        .input-row select { width: 100px; }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-add { background: #4a90d9; color: #fff; }
+        .btn-save { background: #2ecc71; color: #fff; font-size: 16px; padding: 10px 28px; }
+        .btn-danger { background: #d94a4a; color: #fff; }
+        .btn-reset { background: #888; color: #fff; }
+        .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+        /* 멤버 테이블 */
+        .member-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            table-layout: fixed;
+        }
+        .member-table th, .member-table td {
+            padding: 6px 8px;
+            text-align: center;
+            font-size: 14px;
+        }
+        .member-table th {
+            background: #f0f0f0;
+            border-bottom: 2px solid #ddd;
+            font-size: 13px;
+        }
+        .member-table td {
+            border-bottom: 1px solid #eee;
+        }
+        .member-table th:nth-child(1), .member-table td:nth-child(1) { width: 40px; }
+        .member-table th:nth-child(2), .member-table td:nth-child(2) { width: 100px; }
+        .member-table th:nth-child(3), .member-table td:nth-child(3) { width: 80px; }
+        .member-table th:nth-child(4), .member-table td:nth-child(4) { width: 60px; }
+        .member-table th:nth-child(5), .member-table td:nth-child(5) { width: 60px; }
+        .member-table th:nth-child(6), .member-table td:nth-child(6) { width: 60px; }
+        .member-table tr:hover { background: #f9f9f9; }
+
+        .member-count {
+            margin-top: 12px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+            justify-content: flex-end;
+        }
+
+        /* 추첨 탭 */
+        .draw-area {
+            padding-top: 20px;
+        }
+        .logo img {
+            width: 1200px;
+            height: 300px;
+            margin: auto;
+        }
+        .draw-title {
+            color: #eee;
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        .draw-btn {
+            padding: 18px 60px;
+            font-size: 24px;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #4facfe 100%);
+            background-size: 200% 200%;
+            color: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 20px rgba(245, 87, 108, 0.4);
+            animation: btnGlow 3s ease infinite;
+            letter-spacing: 2px;
+        }
+        @keyframes btnGlow {
+            0%, 100% { background-position: 0% 50%; box-shadow: 0 4px 20px rgba(245, 87, 108, 0.4); }
+            50% { background-position: 100% 50%; box-shadow: 0 4px 30px rgba(79, 172, 254, 0.6); }
+        }
+        .draw-btn:hover { transform: scale(1.1); box-shadow: 0 6px 30px rgba(245, 87, 108, 0.6); }
+        .draw-btn:active { transform: scale(0.95); }
 
         #result {
-            margin-top: 20px;
+            margin-top: 30px;
             text-align: center;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            padding: 0 20px;
         }
-
         .team {
             display: inline-block;
             vertical-align: top;
-            margin: 0 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            width: 200px;
-            box-sizing: border-box;
-        }
-
-        .team h3 {
-            margin-top: 0;
-        }
-
-        .team p {
-            margin: 5px 0;
+            margin: 0;
+            padding: 16px;
+            border: none;
+            width: 220px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+            backdrop-filter: blur(4px);
+            transform: translateY(30px);
             opacity: 0;
-            transition: opacity 0.5s ease-in-out;
+            animation: teamSlideIn 0.5s ease forwards;
+        }
+        @keyframes teamSlideIn {
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .team h3 {
+            margin: 0 0 12px 0;
+            font-size: 20px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(0,0,0,0.1);
+            letter-spacing: 1px;
+        }
+        .team p {
+            margin: 6px 0;
+            padding: 4px 8px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.4);
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            font-size: 15px;
+        }
+        .team p.show {
+            opacity: 1;
+            transform: translateX(0);
         }
 
-        /*teamNames = ['핑클 팀 ', 'HOT 팀 ', '신화 팀 ', 'SES 팀 ']; */
-        .team-1 {
-            background-color: #e3c5e8;
+        /* 카운트다운 */
+        .countdown {
+            font-size: 120px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 40px rgba(255,255,255,0.8), 0 0 80px rgba(245, 87, 108, 0.6);
+            animation: countPulse 0.6s ease;
+            margin-top: 60px;
         }
-
-        .team-2 {
-            background-color: #d48181;
+        @keyframes countPulse {
+            0% { transform: scale(2); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
-
-        .team-3 {
-            background-color: #f9c79e;
-        }
-
-        .team-4 {
-            background-color: #cbeff3;
-        }
-
 
         @keyframes shuffleEffect {
-            0% {
-                transform: translateY(0);
-            }
-
-            25% {
-                transform: translateY(-10px);
-            }
-
-            50% {
-                transform: translateY(0);
-            }
-
-            75% {
-                transform: translateY(10px);
-            }
-
-            100% {
-                transform: translateY(0);
-            }
+            0% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-15px) rotate(-2deg); }
+            50% { transform: translateY(0) rotate(0deg); }
+            75% { transform: translateY(15px) rotate(2deg); }
+            100% { transform: translateY(0) rotate(0deg); }
         }
-
         .shuffle {
-            margin-top: 130px;
-            animation: shuffleEffect 0.5s infinite;
-            color: #eee;
-            font-size: 40px;
+            margin-top: 60px;
+            animation: shuffleEffect 0.4s infinite;
+            color: #fff;
+            font-size: 44px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+            letter-spacing: 2px;
         }
+
+        /* 완료 효과 */
+        .done-msg {
+            margin-top: 20px;
+            font-size: 28px;
+            color: #fff;
+            font-weight: bold;
+            text-shadow: 0 0 20px rgba(255,255,255,0.6);
+            animation: doneFade 1s ease;
+        }
+        @keyframes doneFade {
+            0% { opacity: 0; transform: scale(0.5); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* 팀 설정 영역 */
+        .team-settings {
+            margin-top: 20px;
+            padding-top: 16px;
+            border-top: 1px solid #ddd;
+        }
+        .team-settings h3 { margin-bottom: 12px; }
+        .team-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .team-row input { padding: 6px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; width: 140px; }
+        .team-row input[type="number"] { width: 60px; text-align: center; }
+        .team-row input[type="color"] { width: 40px; height: 32px; padding: 2px; cursor: pointer; }
+        .team-row label { font-size: 13px; min-width: 50px; }
+        .team-row .limit-label { font-size: 12px; color: #666; min-width: auto; }
     </style>
 </head>
 
 <body>
-    <div class="logo">
-        <img src="Img/GMISSIONLogo2.png" style="margin: auto; width: 1200px;
-        height: 300px;">
+    <!-- 탭 네비게이션 -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('settings')">멤버 관리</button>
+        <button class="tab-btn" onclick="switchTab('draw')">팀 추첨</button>
     </div>
-    <div class="container">
-        <div id="memberForms">
-            <h2 style="color:#eee;">명량운동회 팀 배정</h2>
-            <button onclick="startShuffle()">팀 추첨</button>
+
+    <!-- 설정 탭 -->
+    <div id="tab-settings" class="tab-content active">
+        <div class="settings-panel">
+            <h2>멤버 관리</h2>
+
+            <!-- 멤버 추가 폼 -->
+            <div class="input-row">
+                <input type="text" id="inputName" placeholder="이름">
+                <select id="inputAgeGroup">
+                    <option value="20대">20대</option>
+                    <option value="30대">30대</option>
+                    <option value="40대">40대</option>
+                    <option value="50대">50대</option>
+                    <option value="60대">60대</option>
+                </select>
+                <select id="inputGender">
+                    <option value="male">남</option>
+                    <option value="female">여</option>
+                </select>
+                <button class="btn btn-add" onclick="addMember()">추가</button>
+            </div>
+
+            <!-- 멤버 목록 -->
+            <table class="member-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>이름</th>
+                        <th>연령대</th>
+                        <th>성별</th>
+                        <th>그룹</th>
+                        <th>삭제</th>
+                    </tr>
+                </thead>
+                <tbody id="memberList"></tbody>
+            </table>
+
+            <div class="member-count" id="memberCount"></div>
+
+            <div class="actions-bar">
+                <button class="btn btn-save" onclick="saveAll()">저장 (GitHub)</button>
+                <button class="btn btn-reset" onclick="loadFromGitHub()">GitHub에서 불러오기</button>
+                <button class="btn btn-sm" style="background:#555;color:#fff;" onclick="showGitHubSettings()">GitHub 설정</button>
+            </div>
+            <div id="saveStatus" style="margin-top:8px;font-size:13px;color:#666;"></div>
+
+            <!-- 팀 설정 -->
+            <div class="team-settings">
+                <h3>팀 설정</h3>
+                <div id="teamSettingsArea"></div>
+                <div class="input-row" style="margin-top: 12px;">
+                    <button class="btn btn-add btn-sm" onclick="addTeam()">+ 팀 추가</button>
+                    <button class="btn btn-danger btn-sm" onclick="removeLastTeam()">- 마지막 팀 삭제</button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="result">
-        <!-- 결과가 여기에 표시됩니다 -->
+    <!-- GitHub 설정 모달 -->
+    <div id="githubModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;">
+        <div style="background:#fff; max-width:450px; margin:100px auto; padding:24px; border-radius:12px; text-align:left;">
+            <h3 style="margin-bottom:16px;">GitHub 설정</h3>
+            <p style="font-size:13px; color:#666; margin-bottom:12px;">한 번만 설정하면 브라우저에 저장됩니다.</p>
+            <div style="margin-bottom:10px;">
+                <label style="font-size:13px; font-weight:bold;">Personal Access Token</label>
+                <input type="password" id="ghToken" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
+            </div>
+            <div style="margin-bottom:10px;">
+                <label style="font-size:13px; font-weight:bold;">저장소 소유자 (owner)</label>
+                <input type="text" id="ghOwner" placeholder="예: myusername" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
+            </div>
+            <div style="margin-bottom:10px;">
+                <label style="font-size:13px; font-weight:bold;">저장소 이름 (repo)</label>
+                <input type="text" id="ghRepo" placeholder="예: team-divider" style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px; margin-top:4px;">
+            </div>
+            <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:16px;">
+                <button class="btn btn-save" onclick="saveGitHubSettings()">저장</button>
+                <button class="btn btn-reset" onclick="document.getElementById('githubModal').style.display='none'">취소</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 추첨 탭 -->
+    <div id="tab-draw" class="tab-content">
+        <div class="draw-area">
+            <div class="logo">
+                <img src="Img/GMISSIONLogo2.png" onerror="this.style.display='none'">
+            </div>
+            <h2 class="draw-title" id="drawTitle"></h2>
+            <button class="draw-btn" onclick="startShuffle()">팀 추첨</button>
+            <div id="result"></div>
+        </div>
     </div>
 
     <script>
-        var members = [
-            { name: '박규열', age: 1962, gender: 'male', group: 'OB' },
-            { name: '최경호', age: 1967, gender: 'male', group: 'OB' },
-            { name: '이정훈', age: 1967, gender: 'male', group: 'OB' },
-            { name: '한준섭', age: 1968, gender: 'male', group: 'OB' },
-            { name: '전승원', age: 1968, gender: 'male', group: 'OB' },
-            { name: '양대경', age: 1969, gender: 'male', group: 'OB' },
-            { name: '최순호', age: 1969, gender: 'male', group: 'OB' },
-            { name: '김영준', age: 1971, gender: 'male', group: 'OB' },
-            { name: '하성우', age: 1971, gender: 'male', group: 'OB' },
-            { name: '윤태형', age: 1972, gender: 'male', group: 'OB' },
-            { name: '김경호', age: 1975, gender: 'male', group: 'OB' },
-            { name: '송의용', age: 1977, gender: 'male', group: 'OB' },
-            { name: '오영진', age: 1978, gender: 'male', group: 'OB' },
-            { name: '조홍득', age: 1980, gender: 'male', group: 'OB' },
-            { name: '이두진', age: 1985, gender: 'male', group: 'OB' },
-            { name: '유세원', age: 1986, gender: 'male', group: 'OB' },
-            { name: '박수환', age: 1988, gender: 'male', group: 'YB' },
-            { name: '윤병준', age: 1988, gender: 'male', group: 'YB' },
-            { name: '박진솔', age: 1991, gender: 'male', group: 'YB' },
-            { name: '김민건', age: 1991, gender: 'male', group: 'YB' },
-            { name: '권도연', age: 1992, gender: 'male', group: 'YB' },
-            { name: '이광우', age: 1992, gender: 'male', group: 'YB' },
-            { name: '박성민', age: 1992, gender: 'male', group: 'YB' },
-            { name: '가이랏', age: 1993, gender: 'male', group: 'YB' },
-            { name: '고은성', age: 1993, gender: 'male', group: 'YB' },
-            { name: '주만근', age: 1993, gender: 'male', group: 'YB' },
-            { name: '송현민', age: 1993, gender: 'male', group: 'YB' },
-            { name: '김현영', age: 1994, gender: 'male', group: 'YB' },
-            { name: '조현민', age: 1995, gender: 'male', group: 'YB' },
-            { name: '오경수', age: 1995, gender: 'male', group: 'YB' },
-            { name: '지명훈', age: 1998, gender: 'male', group: 'YB' },
-            { name: '신성현', age: 2000, gender: 'male', group: 'YB' },
-            { name: '한태구', age: 2000, gender: 'male', group: 'YB' },
-            { name: '김연휘', age: 1981, gender: 'female', group: 'G' },
-            { name: '강민경', age: 1986, gender: 'female', group: 'G' },
-            { name: '임소명', age: 1990, gender: 'female', group: 'G' },
-            { name: '이용희', age: 1996, gender: 'female', group: 'G' },
-            { name: '이승연', age: 1998, gender: 'female', group: 'G' },
-            { name: '성수린', age: 1998, gender: 'female', group: 'G' },
-            { name: '한민주', age: 2000, gender: 'female', group: 'G' }
-        ];
+        // ============================================
+        // 데이터 관리 (localStorage)
+        // ============================================
+        var STORAGE_KEY_MEMBERS = 'teamDivider_members';
+        var STORAGE_KEY_CONFIG = 'teamDivider_config';
 
+        // 현재 편집 중인 데이터 (저장 전까지 메모리에만 존재)
+        var currentMembers = [];
+        var currentConfig = {};
+
+        function initData() {
+            var saved = localStorage.getItem(STORAGE_KEY_MEMBERS);
+            if (saved) {
+                currentMembers = JSON.parse(saved);
+            } else {
+                currentMembers = DEFAULT_MEMBERS.map(function(m) { return Object.assign({}, m); });
+            }
+            var savedCfg = localStorage.getItem(STORAGE_KEY_CONFIG);
+            if (savedCfg) {
+                currentConfig = JSON.parse(savedCfg);
+            } else {
+                currentConfig = JSON.parse(JSON.stringify(CONFIG));
+            }
+            if (!currentConfig.teamLimits) currentConfig.teamLimits = [];
+        }
+
+        // ============================================
+        // GitHub API
+        // ============================================
+        var GH_STORAGE_KEY = 'teamDivider_github';
+
+        function getGitHubSettings() {
+            var saved = localStorage.getItem(GH_STORAGE_KEY);
+            return saved ? JSON.parse(saved) : null;
+        }
+
+        function showGitHubSettings() {
+            var settings = getGitHubSettings() || {};
+            document.getElementById('ghToken').value = settings.token || '';
+            document.getElementById('ghOwner').value = settings.owner || '';
+            document.getElementById('ghRepo').value = settings.repo || '';
+            document.getElementById('githubModal').style.display = 'block';
+        }
+
+        function saveGitHubSettings() {
+            var token = document.getElementById('ghToken').value.trim();
+            var owner = document.getElementById('ghOwner').value.trim();
+            var repo = document.getElementById('ghRepo').value.trim();
+            if (!token || !owner || !repo) { alert('모든 항목을 입력하세요.'); return; }
+            localStorage.setItem(GH_STORAGE_KEY, JSON.stringify({ token: token, owner: owner, repo: repo }));
+            document.getElementById('githubModal').style.display = 'none';
+            alert('GitHub 설정이 저장되었습니다.');
+        }
+
+        function setStatus(msg) {
+            document.getElementById('saveStatus').textContent = msg;
+        }
+
+        function buildConfigContent() {
+            var lines = [];
+            lines.push('var CONFIG = ' + JSON.stringify(currentConfig, null, 4) + ';');
+            lines.push('');
+            lines.push('var DEFAULT_MEMBERS = ' + JSON.stringify(currentMembers, null, 4) + ';');
+            return lines.join('\n');
+        }
+
+        function saveAll() {
+            // localStorage에도 저장
+            localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(currentMembers));
+            localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(currentConfig));
+
+            var gh = getGitHubSettings();
+            if (!gh) {
+                alert('GitHub 설정을 먼저 해주세요.');
+                showGitHubSettings();
+                return;
+            }
+
+            setStatus('GitHub에 저장 중...');
+            var url = 'https://api.github.com/repos/' + gh.owner + '/' + gh.repo + '/contents/config.js';
+
+            // 먼저 현재 파일의 sha를 가져옴
+            fetch(url, {
+                headers: { 'Authorization': 'token ' + gh.token }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                var sha = data.sha || '';
+                var content = btoa(unescape(encodeURIComponent(buildConfigContent())));
+                return fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': 'token ' + gh.token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: '멤버/팀 설정 업데이트',
+                        content: content,
+                        sha: sha
+                    })
+                });
+            })
+            .then(function(res) {
+                if (res.ok) {
+                    setStatus('GitHub에 저장 완료!');
+                } else {
+                    return res.json().then(function(err) { throw new Error(err.message); });
+                }
+            })
+            .catch(function(err) {
+                setStatus('저장 실패: ' + err.message);
+            });
+        }
+
+        function loadFromGitHub() {
+            var gh = getGitHubSettings();
+            if (!gh) {
+                alert('GitHub 설정을 먼저 해주세요.');
+                showGitHubSettings();
+                return;
+            }
+
+            setStatus('GitHub에서 불러오는 중...');
+            var url = 'https://api.github.com/repos/' + gh.owner + '/' + gh.repo + '/contents/config.js';
+
+            fetch(url, {
+                headers: { 'Authorization': 'token ' + gh.token }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (!data.content) throw new Error('파일을 찾을 수 없습니다.');
+                var decoded = decodeURIComponent(escape(atob(data.content.replace(/\n/g, ''))));
+
+                // config.js 내용을 파싱 (eval 대신 Function 사용)
+                var fn = new Function(decoded + '; return { config: CONFIG, members: DEFAULT_MEMBERS };');
+                var result = fn();
+
+                currentConfig = result.config;
+                currentMembers = result.members;
+                if (!currentConfig.teamLimits) currentConfig.teamLimits = [];
+
+                localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(currentMembers));
+                localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(currentConfig));
+
+                renderMemberList();
+                renderTeamSettings();
+                setStatus('GitHub에서 불러오기 완료!');
+            })
+            .catch(function(err) {
+                setStatus('불러오기 실패: ' + err.message);
+            });
+        }
+
+        // 연령대+성별로 그룹 자동 분류
+        function getGroup(ageGroup, gender) {
+            if (gender === 'female') return 'G';
+            var num = parseInt(ageGroup);
+            return num >= 40 ? 'OB' : 'YB';
+        }
+
+        // ============================================
+        // 탭 전환
+        // ============================================
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            document.getElementById('tab-' + tabName).classList.add('active');
+            var btns = document.querySelectorAll('.tab-btn');
+            if (tabName === 'settings') btns[0].classList.add('active');
+            else btns[1].classList.add('active');
+
+            if (tabName === 'draw') {
+                document.getElementById('drawTitle').textContent = currentConfig.title;
+            }
+        }
+
+        // ============================================
+        // 멤버 관리
+        // ============================================
+        function renderMemberList() {
+            var tbody = document.getElementById('memberList');
+            tbody.innerHTML = '';
+
+            currentMembers.forEach(function(m, i) {
+                var tr = document.createElement('tr');
+                var group = getGroup(m.ageGroup, m.gender);
+                tr.innerHTML =
+                    '<td>' + (i + 1) + '</td>' +
+                    '<td>' + m.name + '</td>' +
+                    '<td>' + m.ageGroup + '</td>' +
+                    '<td>' + (m.gender === 'male' ? '남' : '여') + '</td>' +
+                    '<td>' + group + '</td>' +
+                    '<td><button class="btn btn-danger btn-sm" onclick="deleteMember(' + i + ')">X</button></td>';
+                tbody.appendChild(tr);
+            });
+
+            // 통계
+            var ob = currentMembers.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'OB'; }).length;
+            var yb = currentMembers.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'YB'; }).length;
+            var g = currentMembers.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'G'; }).length;
+            document.getElementById('memberCount').textContent =
+                '총 ' + currentMembers.length + '명 (OB: ' + ob + '명, YB: ' + yb + '명, G: ' + g + '명)';
+        }
+
+        function addMember() {
+            var name = document.getElementById('inputName').value.trim();
+            if (!name) { alert('이름을 입력하세요.'); return; }
+
+            var ageGroup = document.getElementById('inputAgeGroup').value;
+            var gender = document.getElementById('inputGender').value;
+
+            currentMembers.push({ name: name, ageGroup: ageGroup, gender: gender });
+            renderMemberList();
+
+            document.getElementById('inputName').value = '';
+            document.getElementById('inputName').focus();
+        }
+
+        function deleteMember(index) {
+            currentMembers.splice(index, 1);
+            renderMemberList();
+        }
+
+        // Enter키로 추가
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('inputName').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') addMember();
+            });
+        });
+
+        // ============================================
+        // 팀 설정
+        // ============================================
+        function renderTeamSettings() {
+            var cfg = currentConfig;
+            var area = document.getElementById('teamSettingsArea');
+            area.innerHTML = '';
+
+            if (!cfg.teamLimits) cfg.teamLimits = [];
+
+            cfg.teamNames.forEach(function(name, i) {
+                var limit = cfg.teamLimits[i] || '';
+                var isLast = (i === cfg.teamNames.length - 1);
+                var div = document.createElement('div');
+                div.className = 'team-row';
+                div.innerHTML =
+                    '<label>팀 ' + (i + 1) + '</label>' +
+                    '<input type="text" value="' + name + '" onchange="updateTeamName(' + i + ', this.value)">' +
+                    '<input type="color" value="' + (cfg.teamColors[i] || '#cccccc') + '" onchange="updateTeamColor(' + i + ', this.value)">' +
+                    (isLast
+                        ? '<span class="limit-label">나머지</span>'
+                        : '<input type="number" min="1" max="99" value="' + limit + '" placeholder="인원" onchange="updateTeamLimit(' + i + ', this.value)">' +
+                          '<span class="limit-label">명</span>');
+                area.appendChild(div);
+            });
+        }
+
+        function updateTeamName(index, value) {
+            currentConfig.teamNames[index] = value;
+        }
+
+        function updateTeamColor(index, value) {
+            currentConfig.teamColors[index] = value;
+        }
+
+        function updateTeamLimit(index, value) {
+            if (!currentConfig.teamLimits) currentConfig.teamLimits = [];
+            currentConfig.teamLimits[index] = value ? parseInt(value) : '';
+        }
+
+        function addTeam() {
+            var alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            var idx = currentConfig.teamNames.length;
+            var letter = idx < alphabet.length ? alphabet[idx] : (idx + 1);
+            currentConfig.teamNames.push(letter + '팀');
+            currentConfig.teamColors.push('#cccccc');
+            if (!currentConfig.teamLimits) currentConfig.teamLimits = [];
+            renderTeamSettings();
+        }
+
+        function removeLastTeam() {
+            if (currentConfig.teamNames.length <= 2) { alert('최소 2팀은 있어야 합니다.'); return; }
+            currentConfig.teamNames.pop();
+            currentConfig.teamColors.pop();
+            if (currentConfig.teamLimits) currentConfig.teamLimits.pop();
+            renderTeamSettings();
+        }
+
+        // ============================================
+        // 팀 추첨
+        // ============================================
         function startShuffle() {
             var resultDiv = document.getElementById('result');
             resultDiv.innerHTML = '';
-            var shuffleDiv = document.createElement('div');
-            shuffleDiv.classList.add('shuffle');
-            shuffleDiv.textContent = '팀을 나누는 중입니다...잠시만요..';
-            resultDiv.appendChild(shuffleDiv);
 
-            setTimeout(divideTeams, 1000); // 1초 후 팀 나누기 실행
+            // 카운트다운 3, 2, 1
+            var count = 3;
+            var cdDiv = document.createElement('div');
+            cdDiv.className = 'countdown';
+            cdDiv.textContent = count;
+            resultDiv.appendChild(cdDiv);
+
+            var cdTimer = setInterval(function() {
+                count--;
+                if (count > 0) {
+                    cdDiv.textContent = count;
+                    cdDiv.style.animation = 'none';
+                    cdDiv.offsetHeight; // reflow
+                    cdDiv.style.animation = 'countPulse 0.6s ease';
+                } else {
+                    clearInterval(cdTimer);
+                    resultDiv.innerHTML = '';
+                    var shuffleDiv = document.createElement('div');
+                    shuffleDiv.classList.add('shuffle');
+                    shuffleDiv.textContent = '팀을 나누는 중입니다...';
+                    resultDiv.appendChild(shuffleDiv);
+                    setTimeout(divideTeams, 800);
+                }
+            }, 700);
         }
 
         function divideTeams() {
-            // OB, YB, 여성 멤버 분리
-            var obMembers = members.filter(member => member.group === 'OB');
-            var ybMembers = members.filter(member => member.group === 'YB');
-            var femaleMembers = members.filter(member => member.gender === 'female');
+            var members = currentMembers.map(function(m) { return Object.assign({}, m); });
+            var cfg = currentConfig;
+            var teamCount = cfg.teamNames.length;
 
-            // OB, YB 멤버 각각 섞기
+            // 그룹별 분리
+            var obMembers = members.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'OB'; });
+            var ybMembers = members.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'YB'; });
+            var gMembers = members.filter(function(m) { return getGroup(m.ageGroup, m.gender) === 'G'; });
+
             shuffle(obMembers);
             shuffle(ybMembers);
-            shuffle(femaleMembers);
+            shuffle(gMembers);
 
             // 팀 초기화
-            var teams = [[], [], [], []];
-            var teamNames = ['SES 팀 ', '핑클 팀 ', '신화 팀 ', 'GOD 팀 '];
+            var teams = [];
+            for (var t = 0; t < teamCount; t++) teams.push([]);
 
-            // OB 멤버들 4명씩 각 팀에 랜덤 배정
-            for (var i = 0; i < 4; i++) {
-                for (var j = 0; j < 4; j++) {
-                    teams[i].push(obMembers.pop());
-                }
-            }
+            // 인원 제한 배열
+            var limits = cfg.teamLimits || [];
 
-            // YB 멤버들 4명씩 각 팀에 랜덤 배정
-            for (var i = 0; i < 4; i++) {
-                for (var j = 0; j < 4; j++) {
-                    teams[i].push(ybMembers.pop());
-                }
-            }
-
-            // YB 멤버 한 명을 마지막 팀에 추가
-            teams[3].push(ybMembers.pop());
-
-
-            // 여성 멤버들 배정: 1, 2, 3팀에 2명씩, 4팀에 1명
-            for (var k = 0; k < femaleMembers.length; k++) {
-                if (k < 6) {
-                    teams[k % 3].push(femaleMembers[k]);
-                } else {
-                    teams[3].push(femaleMembers[k]);
-                }
-            }
+            // 각 그룹을 팀에 배분 (인원 제한 적용, 마지막 팀은 나머지)
+            distributeToTeams(obMembers, teams, limits);
+            distributeToTeams(ybMembers, teams, limits);
+            distributeToTeams(gMembers, teams, limits);
 
             // 결과 출력
             var resultDiv = document.getElementById('result');
             resultDiv.innerHTML = '';
 
             var teamDivs = [];
-            var teamClasses = ['team-1', 'team-2', 'team-3', 'team-4'];
-
-            for (var k = 0; k < 4; k++) {
+            for (var k = 0; k < teamCount; k++) {
                 var teamDiv = document.createElement('div');
                 teamDiv.classList.add('team');
-                teamDiv.classList.add(teamClasses[k]);
+                teamDiv.style.backgroundColor = cfg.teamColors[k] || '#ccc';
+                teamDiv.style.animationDelay = (k * 0.15) + 's';
                 var teamTitle = document.createElement('h3');
-                teamTitle.textContent = teamNames[k];
+                teamTitle.textContent = cfg.teamNames[k];
                 teamDiv.appendChild(teamTitle);
                 resultDiv.appendChild(teamDiv);
                 teamDivs.push(teamDiv);
             }
 
-            var maxLength = Math.max(teams[0].length, teams[1].length, teams[2].length, teams[3].length);
+            var maxLength = 0;
+            teams.forEach(function(team) { if (team.length > maxLength) maxLength = team.length; });
+
             for (var i = 0; i < maxLength; i++) {
-                (function (i) {
-                    setTimeout(function () {
-                        for (var k = 0; k < 4; k++) {
+                (function(i) {
+                    setTimeout(function() {
+                        for (var k = 0; k < teamCount; k++) {
                             if (i < teams[k].length) {
                                 var member = teams[k][i];
                                 var memberInfo = document.createElement('p');
-                                memberInfo.textContent = member.group + '팀 ' + member.name;
+                                var group = getGroup(member.ageGroup, member.gender);
+                                memberInfo.textContent = group + ' ' + member.name;
                                 teamDivs[k].appendChild(memberInfo);
-                                setTimeout((function (memberInfo) {
-                                    return function () {
-                                        memberInfo.style.opacity = 1;
-                                    };
+                                setTimeout((function(el) {
+                                    return function() { el.classList.add('show'); };
                                 })(memberInfo), 100);
                             }
                         }
-                    }, i * 300);
+                        // 마지막 줄이면 완료 메시지
+                        if (i === maxLength - 1) {
+                            setTimeout(function() {
+                                var doneDiv = document.createElement('div');
+                                doneDiv.className = 'done-msg';
+                                doneDiv.textContent = '팀 배정 완료!';
+                                resultDiv.appendChild(doneDiv);
+                            }, 500);
+                        }
+                    }, i * 400);
                 })(i);
             }
         }
 
-        // Fisher-Yates shuffle 알고리즘을 사용한 배열 섞기 함수
+        // 멤버를 팀에 라운드 로빈 배분 (인원 제한 적용, 마지막 팀은 나머지)
+        function distributeToTeams(memberList, teams, limits) {
+            var lastIdx = teams.length - 1;
+            var robin = 0; // 라운드 로빈 시작 인덱스
+            memberList.forEach(function(member) {
+                var placed = false;
+                // 라운드 로빈으로 돌면서 빈자리 있는 팀에 배정 (마지막 팀 제외)
+                for (var attempt = 0; attempt < lastIdx; attempt++) {
+                    var t = (robin + attempt) % lastIdx;
+                    var limit = (limits && limits[t]) ? limits[t] : Infinity;
+                    if (teams[t].length < limit) {
+                        teams[t].push(member);
+                        robin = (t + 1) % lastIdx;
+                        placed = true;
+                        break;
+                    }
+                }
+                // 앞 팀이 다 찼으면 마지막 팀에
+                if (!placed) {
+                    teams[lastIdx].push(member);
+                }
+            });
+        }
+
+        // Fisher-Yates shuffle
         function shuffle(array) {
             var currentIndex = array.length, temporaryValue, randomIndex;
-
-            // 배열 끝까지 반복
             while (0 !== currentIndex) {
-                // 남아 있는 요소 중 하나를 랜덤 선택
                 randomIndex = Math.floor(Math.random() * currentIndex);
                 currentIndex -= 1;
-
-                // 현재 요소와 랜덤 선택한 요소를 교환
                 temporaryValue = array[currentIndex];
                 array[currentIndex] = array[randomIndex];
                 array[randomIndex] = temporaryValue;
             }
-
             return array;
         }
+
+        // ============================================
+        // 초기화
+        // ============================================
+        initData();
+        renderMemberList();
+        renderTeamSettings();
     </script>
 </body>
 
