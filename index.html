@@ -565,21 +565,18 @@
 
             if (!cfg.teamLimits) cfg.teamLimits = [];
 
-            cfg.teamNames.forEach(function(name, i) {
-                var limit = cfg.teamLimits[i] || '';
-                var isLast = (i === cfg.teamNames.length - 1);
-                var div = document.createElement('div');
-                div.className = 'team-row';
-                div.innerHTML =
-                    '<label>팀 ' + (i + 1) + '</label>' +
-                    '<input type="text" value="' + name + '" onchange="updateTeamName(' + i + ', this.value)">' +
-                    '<input type="color" value="' + (cfg.teamColors[i] || '#cccccc') + '" onchange="updateTeamColor(' + i + ', this.value)">' +
-                    (isLast
-                        ? '<span class="limit-label">나머지</span>'
-                        : '<input type="number" min="1" max="99" value="' + limit + '" placeholder="인원" onchange="updateTeamLimit(' + i + ', this.value)">' +
-                          '<span class="limit-label">명</span>');
-                area.appendChild(div);
-            });
+        cfg.teamNames.forEach(function(name, i) {
+    var limit = cfg.teamLimits[i] || '';
+    var div = document.createElement('div');
+    div.className = 'team-row';
+    div.innerHTML =
+        '<label>팀 ' + (i + 1) + '</label>' +
+        '<input type="text" value="' + name + '" onchange="updateTeamName(' + i + ', this.value)">' +
+        '<input type="color" value="' + (cfg.teamColors[i] || '#cccccc') + '" onchange="updateTeamColor(' + i + ', this.value)">' +
+        '<input type="number" min="1" max="99" value="' + limit + '" placeholder="인원" onchange="updateTeamLimit(' + i + ', this.value)">' +
+        '<span class="limit-label">명</span>';
+    area.appendChild(div);
+});
         }
 
         function updateTeamName(index, value) {
