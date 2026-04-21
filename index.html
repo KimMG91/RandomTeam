@@ -353,6 +353,7 @@
             <div class="logo">
                 <img src="Img/GMISSIONLogo2.png" onerror="this.alt='LOGO'; this.style.width='400px'; this.style.height='100px'; this.style.border='2px dashed #fff'; this.style.lineHeight='100px'; this.style.color='#fff'; this.style.fontSize='24px'; this.style.display='inline-block';">
             </div>
+            <h2 class="draw-title" id="drawTitle"></h2>
             <button class="draw-btn" onclick="startShuffle()">팀 추첨</button>
             <div id="result"></div>
         </div>
@@ -379,6 +380,7 @@
 
             if (!currentConfig.teamNames) {
                 currentConfig = {
+                    title: '팀 배정',
                     teamNames: ['A팀', 'B팀', 'C팀', 'D팀'],
                     teamColors: ['#e3c5e8', '#d48181', '#f9c79e', '#cbeff3'],
                     teamLimits: []
@@ -565,18 +567,18 @@
 
             if (!cfg.teamLimits) cfg.teamLimits = [];
 
-        cfg.teamNames.forEach(function(name, i) {
-    var limit = cfg.teamLimits[i] || '';
-    var div = document.createElement('div');
-    div.className = 'team-row';
-    div.innerHTML =
-        '<label>팀 ' + (i + 1) + '</label>' +
-        '<input type="text" value="' + name + '" onchange="updateTeamName(' + i + ', this.value)">' +
-        '<input type="color" value="' + (cfg.teamColors[i] || '#cccccc') + '" onchange="updateTeamColor(' + i + ', this.value)">' +
-        '<input type="number" min="1" max="99" value="' + limit + '" placeholder="인원" onchange="updateTeamLimit(' + i + ', this.value)">' +
-        '<span class="limit-label">명</span>';
-    area.appendChild(div);
-});
+            cfg.teamNames.forEach(function(name, i) {
+                var limit = cfg.teamLimits[i] || '';
+                var div = document.createElement('div');
+                div.className = 'team-row';
+                div.innerHTML =
+                    '<label>팀 ' + (i + 1) + '</label>' +
+                    '<input type="text" value="' + name + '" onchange="updateTeamName(' + i + ', this.value)">' +
+                    '<input type="color" value="' + (cfg.teamColors[i] || '#cccccc') + '" onchange="updateTeamColor(' + i + ', this.value)">' +
+                    '<input type="number" min="1" max="99" value="' + limit + '" placeholder="인원" onchange="updateTeamLimit(' + i + ', this.value)">' +
+                    '<span class="limit-label">명</span>';
+                area.appendChild(div);
+            });
         }
 
         function updateTeamName(index, value) {
@@ -773,31 +775,31 @@
             }
         }
 
-        // 멤버를 팀에 라운드 로빈 배분 (인원 제한 적용, 마지막 팀은 나머지)
+        // 멤버를 팀에 라운드 로빈 균등 배분 (인원 제한 적용)
         function distributeToTeams(memberList, teams, limits) {
-    var teamCount = teams.length;
-    var robin = Math.floor(Math.random() * teamCount);
-    memberList.forEach(function(member) {
-        var placed = false;
-        for (var attempt = 0; attempt < teamCount; attempt++) {
-            var t = (robin + attempt) % teamCount;
-            var limit = (limits && limits[t]) ? limits[t] : Infinity;
-            if (teams[t].length < limit) {
-                teams[t].push(member);
-                robin = (t + 1) % teamCount;
-                placed = true;
-                break;
-            }
+            var teamCount = teams.length;
+            var robin = Math.floor(Math.random() * teamCount);
+            memberList.forEach(function(member) {
+                var placed = false;
+                for (var attempt = 0; attempt < teamCount; attempt++) {
+                    var t = (robin + attempt) % teamCount;
+                    var limit = (limits && limits[t]) ? limits[t] : Infinity;
+                    if (teams[t].length < limit) {
+                        teams[t].push(member);
+                        robin = (t + 1) % teamCount;
+                        placed = true;
+                        break;
+                    }
+                }
+                if (!placed) {
+                    var minIdx = 0;
+                    for (var t = 1; t < teamCount; t++) {
+                        if (teams[t].length < teams[minIdx].length) minIdx = t;
+                    }
+                    teams[minIdx].push(member);
+                }
+            });
         }
-        if (!placed) {
-            var minIdx = 0;
-            for (var t = 1; t < teamCount; t++) {
-                if (teams[t].length < teams[minIdx].length) minIdx = t;
-            }
-            teams[minIdx].push(member);
-        }
-    });
-}
 
         // Fisher-Yates shuffle
         function shuffle(array) {
