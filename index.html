@@ -775,27 +775,29 @@
 
         // 멤버를 팀에 라운드 로빈 배분 (인원 제한 적용, 마지막 팀은 나머지)
         function distributeToTeams(memberList, teams, limits) {
-            var lastIdx = teams.length - 1;
-            var robin = Math.floor(Math.random() * lastIdx);
-            memberList.forEach(function(member) {
-                var placed = false;
-                // 마지막 팀 제외하고 라운드 로빈
-                for (var attempt = 0; attempt < lastIdx; attempt++) {
-                    var t = (robin + attempt) % lastIdx;
-                    var limit = (limits && limits[t]) ? limits[t] : Infinity;
-                    if (teams[t].length < limit) {
-                        teams[t].push(member);
-                        robin = (t + 1) % lastIdx;
-                        placed = true;
-                        break;
-                    }
-                }
-                // 앞 팀이 다 찼으면 마지막 팀(나머지)에
-                if (!placed) {
-                    teams[lastIdx].push(member);
-                }
-            });
+    var teamCount = teams.length;
+    var robin = Math.floor(Math.random() * teamCount);
+    memberList.forEach(function(member) {
+        var placed = false;
+        for (var attempt = 0; attempt < teamCount; attempt++) {
+            var t = (robin + attempt) % teamCount;
+            var limit = (limits && limits[t]) ? limits[t] : Infinity;
+            if (teams[t].length < limit) {
+                teams[t].push(member);
+                robin = (t + 1) % teamCount;
+                placed = true;
+                break;
+            }
         }
+        if (!placed) {
+            var minIdx = 0;
+            for (var t = 1; t < teamCount; t++) {
+                if (teams[t].length < teams[minIdx].length) minIdx = t;
+            }
+            teams[minIdx].push(member);
+        }
+    });
+}
 
         // Fisher-Yates shuffle
         function shuffle(array) {
