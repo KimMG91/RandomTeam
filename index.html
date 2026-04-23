@@ -337,6 +337,11 @@
             <!-- 팀 설정 -->
             <div class="team-settings">
                 <h3>팀 설정</h3>
+                <p style="font-size:12px; color:#888; margin-bottom:10px; line-height:1.5;">
+                    💡 <b>인원</b>은 <b>최대 제한</b>입니다. 비워두면 무제한.<br>
+                    기본은 <b>모든 팀 균등 배분</b> (예: 45명/4팀 = 12,11,11,11 - 어느 팀이 12명일지는 랜덤)<br>
+                    특정 팀 인원을 고정하고 싶을 때만 숫자 입력 (예: 5명 팀 하나 만들 때)
+                </p>
                 <div id="teamSettingsArea"></div>
                 <div class="input-row" style="margin-top: 12px;">
                     <button class="btn btn-add btn-sm" onclick="addTeam()">+ 팀 추가</button>
@@ -353,7 +358,6 @@
             <div class="logo">
                 <img src="Img/GMISSIONLogo2.png" onerror="this.alt='LOGO'; this.style.width='400px'; this.style.height='100px'; this.style.border='2px dashed #fff'; this.style.lineHeight='100px'; this.style.color='#fff'; this.style.fontSize='24px'; this.style.display='inline-block';">
             </div>
-            <h2 class="draw-title" id="drawTitle"></h2>
             <button class="draw-btn" onclick="startShuffle()">팀 추첨</button>
             <div id="result"></div>
         </div>
@@ -619,6 +623,25 @@
             var resultDiv = document.getElementById('result');
             resultDiv.innerHTML = '';
 
+            // 백그라운드에서 시트 불러오기 시작 (카운트다운 중 완료 기대)
+            var sheetLoaded = false;
+            callSheet('action=read', function(data) {
+                if (data.members && data.members.length > 0) {
+                    currentMembers = data.members;
+                }
+                if (data.teams && data.teams.length > 0) {
+                    currentConfig.teamNames = data.teams.map(function(t) { return t.name; });
+                    currentConfig.teamColors = data.teams.map(function(t) { return t.color; });
+                    currentConfig.teamLimits = data.teams.map(function(t) { return t.limit; });
+                }
+                if (data.fixedGroups) {
+                    localStorage.setItem(STORAGE_KEY_FIXED, JSON.stringify(data.fixedGroups));
+                }
+                localStorage.setItem(STORAGE_KEY_MEMBERS, JSON.stringify(currentMembers));
+                localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(currentConfig));
+                sheetLoaded = true;
+            });
+
             // 카운트다운 3, 2, 1
             var count = 3;
             var cdDiv = document.createElement('div');
@@ -640,7 +663,25 @@
                     shuffleDiv.classList.add('shuffle');
                     shuffleDiv.textContent = '팀을 나누는 중입니다...';
                     resultDiv.appendChild(shuffleDiv);
-                    setTimeout(divideTeams, 800);
+
+                    // 시트 불러오기가 아직 안 끝났으면 기다림 (한 번만 실행 보장)
+                    var divided = false;
+                    var runDivide = function() {
+                        if (divided) return;
+                        divided = true;
+                        divideTeams();
+                    };
+                    var waitForSheet = setInterval(function() {
+                        if (sheetLoaded) {
+                            clearInterval(waitForSheet);
+                            setTimeout(runDivide, 300);
+                        }
+                    }, 100);
+                    // 최대 5초 후에는 강제로 진행
+                    setTimeout(function() {
+                        clearInterval(waitForSheet);
+                        runDivide();
+                    }, 5000);
                 }
             }, 700);
         }
@@ -775,29 +816,35 @@
             }
         }
 
-        // 멤버를 팀에 라운드 로빈 균등 배분 (인원 제한 적용)
+        // 가장 적은 팀에 우선 배정 (동점이면 랜덤, 인원 제한 적용)
         function distributeToTeams(memberList, teams, limits) {
             var teamCount = teams.length;
-            var robin = Math.floor(Math.random() * teamCount);
             memberList.forEach(function(member) {
-                var placed = false;
-                for (var attempt = 0; attempt < teamCount; attempt++) {
-                    var t = (robin + attempt) % teamCount;
+                var minSize = Infinity;
+                var candidates = [];
+                for (var t = 0; t < teamCount; t++) {
                     var limit = (limits && limits[t]) ? limits[t] : Infinity;
-                    if (teams[t].length < limit) {
-                        teams[t].push(member);
-                        robin = (t + 1) % teamCount;
-                        placed = true;
-                        break;
+                    if (teams[t].length >= limit) continue;
+                    if (teams[t].length < minSize) {
+                        minSize = teams[t].length;
+                        candidates = [t];
+                    } else if (teams[t].length === minSize) {
+                        candidates.push(t);
                     }
                 }
-                if (!placed) {
-                    var minIdx = 0;
+
+                var targetIdx;
+                if (candidates.length === 0) {
+                    // 모든 팀이 제한 꽉 찬 경우 가장 적은 팀에
+                    targetIdx = 0;
                     for (var t = 1; t < teamCount; t++) {
-                        if (teams[t].length < teams[minIdx].length) minIdx = t;
+                        if (teams[t].length < teams[targetIdx].length) targetIdx = t;
                     }
-                    teams[minIdx].push(member);
+                } else {
+                    // 동점팀들 중 랜덤 선택
+                    targetIdx = candidates[Math.floor(Math.random() * candidates.length)];
                 }
+                teams[targetIdx].push(member);
             });
         }
 
